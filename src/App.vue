@@ -9,7 +9,17 @@
           class="search-input"
         />
       </div>
-      <div class="overflow-x-auto">
+      <div class="loading-container" v-if="loadingState">
+        <img src="@/assets/batman-thinking.gif" alt="loading" width="" />
+        <div class="bouce-loading">
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="text-white text-center tracking-widest">Loading...</div>
+      </div>
+      <div v-else class="overflow-x-auto">
+        <div v-if="filterModels.length <= 0">No leaderboard.</div>
         <table class="table-w">
           <thead>
             <tr class="border-gray-200 bg-gray-100 border-2">
@@ -24,7 +34,15 @@
               </th>
               <th class="py-4">Model Name</th>
               <th class="py-4">Endpoint</th>
-              <th class="py-4 rounded-right w-14">Count</th>
+              <th
+                @click="sortAction = !sortAction"
+                class="py-4 rounded-right number-col"
+              >
+                <span class="number-txt">Count</span>
+                <div
+                  :class="sortAction ? 'triangle-up' : 'triangle-down'"
+                ></div>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -48,7 +66,7 @@
               <td class="py-3 px-4 scroller endpoint">
                 {{ leader.endpoint }}
               </td>
-              <td class="py-3 px-4 count scroller">
+              <td class="py-3 px-4 count scroller w-14">
                 {{ leader.count }}
               </td>
             </tr>
@@ -65,10 +83,14 @@ import axios from "axios";
 export default {
   name: "App",
   async created() {
-    const { data } = await axios.get("https://leaderboard.visai.ai/");
+    this.loadingState = true;
+    const { data } = await axios.get("https://api-leaderboard.visai.ai/");
 
-    this.leaderboardList = data.leaderboard;
+    this.leaderboardList = data.leaderboard.sort((a, b) => {
+      return b.count - a.count;
+    });
     this.filterModels = this.leaderboardList;
+    this.loadingState = false;
   },
   data() {
     return {
@@ -77,6 +99,8 @@ export default {
       filterModels: [],
       sortAction: false,
       startIndex: 1,
+      loadingState: false,
+      sortedLeaderboardList: [],
     };
   },
   watch: {
@@ -142,7 +166,7 @@ html {
   margin-bottom: 1.5rem;
 }
 .w-14 {
-  max-width: 12rem;
+  width: 8rem;
 }
 .count {
   font-weight: 700;
@@ -304,5 +328,40 @@ td {
   border-right: 6px solid transparent;
   border-bottom: 10px solid #555;
   margin-left: 0.2rem;
+}
+
+.bouce-loading {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.loading-container {
+  margin-top: 5rem;
+  margin-bottom: 5rem;
+  color: #ffffff;
+}
+
+.bouce-loading div {
+  background: #eaecee;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  margin: 0.5rem;
+  animation: 0.3s bounce infinite alternate;
+}
+
+.bouce-loading div:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.bouce-loading div:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+@keyframes bounce {
+  to {
+    opacity: 0.3;
+    transform: translate3d(0, -1rem, 0);
+  }
 }
 </style>
